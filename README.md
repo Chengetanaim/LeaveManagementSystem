@@ -1,7 +1,7 @@
 <h1>Leave Management System</h1>
 
-Fatapi project for managing employee leave.<br>
-Run uvicorn app.main:app --reload to start server<br>
+Fastapi project for managing employee leave.<br>
+Run *uvicorn app.main:app --reload* to start server<br>
 
 <h2>Database schema:</h2>
 <li>Employee {full name, email, department_id , gender, position}</li>

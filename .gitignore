@@ -4,3 +4,4 @@ app/__pycache__/schemas.cpython-311.pyc
 venv/
 **/__pycache__/
 versions/
+.env

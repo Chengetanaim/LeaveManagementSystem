@@ -1,16 +1,25 @@
 from fastapi import FastAPI
-from . import models
-from .database import engine
-from .routers import user, auth, department, employee, grade, employee_grade, leave, clocking
+from app import models
+from app.database import engine
+from app.routers import (
+    user,
+    auth,
+    department,
+    employee,
+    grade,
+    employee_grade,
+    leave,
+    clocking,
+)
 
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
-@app.get('/home')
+
+@app.get("/home")
 def index() -> dict:
-    return {
-        "message": "This is the home page"
-    }
+    return {"message": "This is the home page"}
+
 
 app.include_router(user.router)
 app.include_router(auth.router)

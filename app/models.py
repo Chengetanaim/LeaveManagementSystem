@@ -18,6 +18,8 @@ class Employee(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     user = relationship("User")
+    grade_id = Column(Integer, ForeignKey("grades.id", ondelete="CASCADE"))
+    grade = relationship("Grade")
 
 
 class User(Base):
@@ -49,6 +51,33 @@ class EmployeeGrade(Base):
         nullable=False,
         primary_key=True,
     )
+    days_left = Column(Integer)
+
+
+# Leave Type decides how much days of leave to get
+# Annual Leave has it's specific number of days per year, and so does sick leave and maternity leave
+class LeaveType(Base):
+    __tablename__ = "leave-types"
+    id = Column(Integer, primary_key=True, nullable=False)
+    leave_type = Column(String, nullable=False)
+    leave_days = Column(Integer, nullable=False)
+
+
+class LeaveDaysLeft(Base):
+    __tablename__ = "leave-days-left"
+    employee_id = Column(
+        Integer,
+        ForeignKey("employees.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    )
+    leave_type_id = Column(
+        Integer,
+        ForeignKey("leave-types.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    )
+    days_left = Column(Integer, nullable=False)
 
 
 class Leave(Base):
@@ -60,8 +89,9 @@ class Leave(Base):
         Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     employee = relationship("Employee")
-    # add status on leave
-    leave_type = Column(String, nullable=False)
+    leave_type_id = Column(Integer, ForeignKey("leave-types.id", ondelete="CASCADE"))
+    leave_type = relationship("LeaveType")
+    status = Column(String)
 
 
 class Department(Base):

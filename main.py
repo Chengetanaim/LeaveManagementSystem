@@ -10,6 +10,9 @@ from app.routers import (
     employee_grade,
     leave,
     clocking,
+    leave_type,
+    leave_days_left,
+    sell_leave,
 )
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,6 +38,9 @@ app.include_router(auth.router)
 app.include_router(department.router)
 app.include_router(employee.router)
 app.include_router(grade.router)
-app.include_router(employee_grade.router)
+app.include_router(leave_type.router)
 app.include_router(leave.router)
+app.include_router(leave_days_left.router)
+app.include_router(employee_grade.router)
+app.include_router(sell_leave.router)
 app.include_router(clocking.router)

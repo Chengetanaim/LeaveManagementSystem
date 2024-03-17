@@ -6,9 +6,21 @@ from sqlalchemy import pool
 from alembic import context
 from app.models import Base
 
+from decouple import config as decouple_config  # type: ignore
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+config.set_main_option(
+    "sqlalchemy.url",
+    "postgresql://{username}:{password}@{host}:{port}/{database}".format(
+        username=decouple_config("DB_USERNAME"),
+        password=decouple_config("DB_PASSWORD"),
+        host=decouple_config("DB_HOSTNAME"),
+        port=decouple_config("DB_PORT"),
+        database=decouple_config("DB_NAME"),
+    ),
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

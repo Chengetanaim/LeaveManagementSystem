@@ -17,6 +17,7 @@ from app.routers import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import status, HTTPException, Depends
 from sqlalchemy.orm import Session
+import uvicorn
 
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -64,3 +65,7 @@ app.include_router(leave_days_left.router)
 app.include_router(employee_grade.router)
 app.include_router(sell_leave.router)
 app.include_router(clocking.router)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=10000)

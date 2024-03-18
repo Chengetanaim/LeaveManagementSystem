@@ -92,7 +92,7 @@ class Clocking(BaseModel):
         orm_mode = True
 
 
-class ClockingOut(BaseModel):
+class ClockingOut(Clocking):
     id: int
     employee: Employee
 

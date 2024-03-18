@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app import models
+from app import models, schemas, database
 from app.database import engine
 from app.routers import (
     user,
@@ -15,6 +15,8 @@ from app.routers import (
     sell_leave,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import status, HTTPException, Depends
+from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -31,6 +33,24 @@ app.add_middleware(
 @app.get("/home")
 def index() -> dict:
     return {"message": "This is the home page"}
+
+
+@app.post("/create_department", status_code=status.HTTP_201_CREATED)
+def create_department(db: Session = Depends(database.get_db)):
+    new_department = models.Department(department="Human Resources")
+    db.add(new_department)
+    db.commit()
+    db.refresh(new_department)
+    return {"message": "Department successfully added"}
+
+
+@app.post("/create_grade", status_code=status.HTTP_201_CREATED)
+def create_grade(db: Session = Depends(database.get_db)):
+    new_grade = models.Grade(grade="1 to 12", leave_days=24)
+    db.add(new_grade)
+    db.commit()
+    db.refresh(new_grade)
+    return {"message": "Grade successfully added"}
 
 
 app.include_router(user.router)

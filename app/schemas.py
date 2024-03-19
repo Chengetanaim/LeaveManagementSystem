@@ -92,7 +92,7 @@ class Clocking(BaseModel):
         orm_mode = True
 
 
-class ClockingOut(BaseModel):
+class ClockingOut(Clocking):
     id: int
     employee: Employee
 
@@ -108,6 +108,9 @@ class LeaveTypeOut(LeaveType):
 
 class LeaveDaysLeft(BaseModel):
     leave_type_id: int
+    leave_type: LeaveTypeOut
+    employee_id: int
+    employee: EmployeeOut
     days_left: int
 
 

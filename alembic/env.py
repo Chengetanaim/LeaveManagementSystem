@@ -5,6 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.models import Base
+from decouple import config as decouple_config
 
 from decouple import config as decouple_config  # type: ignore
 

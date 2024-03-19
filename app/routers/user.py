@@ -13,6 +13,16 @@ def create_user(
     employee_details: schemas.EmployeeCreate,
     db: Session = Depends(database.get_db),
 ):
+    department = (
+        db.query(models.Department)
+        .filter(models.Department.id == employee_details.department_id)
+        .first()
+    )
+    if not department:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"There is no department of id: {employee_details.department_id}",
+        )
     user = db.query(models.User).filter(models.User.email == user_details.email).first()
     if user:
         raise HTTPException(
@@ -34,16 +44,7 @@ def create_user(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"You already have an employee profile",
         )
-    department = (
-        db.query(models.Department)
-        .filter(models.Department.id == employee_details.department_id)
-        .first()
-    )
-    if not department:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"There is no department of id: {employee_details.department_id}",
-        )
+
     new_employee = models.Employee(**employee_details.dict(), user_id=new_user.id)
     db.add(new_employee)
     db.commit()

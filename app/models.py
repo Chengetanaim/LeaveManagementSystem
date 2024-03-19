@@ -71,12 +71,14 @@ class LeaveDaysLeft(Base):
         nullable=False,
         primary_key=True,
     )
+    employee = relationship("Employee")
     leave_type_id = Column(
         Integer,
         ForeignKey("leave-types.id", ondelete="CASCADE"),
         nullable=False,
         primary_key=True,
     )
+    leave_type = relationship("LeaveType")
     days_left = Column(Integer, nullable=False)
 
 

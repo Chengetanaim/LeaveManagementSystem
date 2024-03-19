@@ -107,10 +107,8 @@ class LeaveTypeOut(LeaveType):
 
 
 class LeaveDaysLeft(BaseModel):
-    leave_type_id: int
+    # leave_type_id: int
     leave_type: LeaveTypeOut
-    employee_id: int
-    employee: EmployeeOut
     days_left: int
 
 

@@ -86,7 +86,6 @@ class LeaveOut(Leave):
 class Clocking(BaseModel):
     clock_in: datetime
     clock_out: datetime
-    employee_id: int
 
     class Config:
         orm_mode = True

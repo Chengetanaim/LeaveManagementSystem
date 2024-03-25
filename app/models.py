@@ -95,6 +95,9 @@ class Leave(Base):
     leave_type = relationship("LeaveType")
     status = Column(String)
 
+    def __repr__(self):
+        return f"Leave<ID={self.id}, EmployeeID={self.employee_id}>"
+
 
 class Department(Base):
     __tablename__ = "departments"

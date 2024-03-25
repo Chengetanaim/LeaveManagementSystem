@@ -76,11 +76,17 @@ class Leave(BaseModel):
     leave_type_id: int
 
 
+class LeaveType(BaseModel):
+    leave_type: str
+    leave_days: int
+
+
 class LeaveOut(Leave):
     id: int
     employee_id: int
     employee: EmployeeOut
     status: str
+    leave_type: LeaveType
 
 
 class Clocking(BaseModel):
@@ -88,17 +94,12 @@ class Clocking(BaseModel):
     clock_out: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ClockingOut(Clocking):
     id: int
     employee: Employee
-
-
-class LeaveType(BaseModel):
-    leave_type: str
-    leave_days: int
 
 
 class LeaveTypeOut(LeaveType):

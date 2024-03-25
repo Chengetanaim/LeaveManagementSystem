@@ -107,9 +107,9 @@ class LeaveTypeOut(LeaveType):
 
 
 class LeaveDaysLeft(BaseModel):
-    # leave_type_id: int
-    leave_type: LeaveTypeOut
-    days_left: int
+    type: str
+    days: int
+    days_used: int
 
 
 class SellLeave(BaseModel):

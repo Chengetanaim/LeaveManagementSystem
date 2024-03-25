@@ -17,7 +17,6 @@ def create_leave(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-
     employee = (
         db.query(models.Employee)
         .filter(models.Employee.user_id == current_user.id)

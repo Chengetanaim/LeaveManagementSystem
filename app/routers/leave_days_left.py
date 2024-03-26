@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends
 
 from sqlalchemy import func
@@ -14,23 +15,11 @@ def get_leave_days_left(
     db: Session = Depends(database.get_db),
     current_user: schemas.UserOut = Depends(oauth2.get_current_user),
 ):
-    employee = (
-        db.query(models.Employee)
-        .filter(models.Employee.user_id == current_user.id)
-        .first()
-    )
-
+    employee = db.query(models.Employee).filter_by(user_id=current_user.id).first()
     if employee is None:
         raise Error404(f"Employee with user id {current_user.id} not found.")
 
-    type_of_leaves = db.query(models.LeaveType).all()
-    leaves_by_type = (
-        db.query(models.Leave)
-        .filter_by(employee_id=employee.id)
-        .group_by(models.Leave.leave_type_id, models.Leave.id)
-        .all()
-    )
-
+    leave_types = db.query(models.LeaveType).all()
     leaves_by_type = (
         db.query(models.Leave)
         .filter_by(employee_id=employee.id)
@@ -44,25 +33,27 @@ def get_leave_days_left(
         .all()
     )
 
-    print(leaves_by_type)
-    FIRST_ITEM_ONTHE_TUPLE_IS_LEAVE_TYPE_ID = 0
-    SECOND_ITEM_ONTHE_TUPLE_IS_DAYS_USED = 1
+    LEAVE_TYPE_ID_INDEX = 0
+    LEAVE_TYPE_DAYS_INDEX = 1
 
     employee_leaves: list[dict[str, str | int]] = []
-    for leave_type in type_of_leaves:
+    for leave_type in leave_types:
         employee_leave: dict[str, str | int] = {}
+
         employee_leave["type"] = str(leave_type.leave_type)
         employee_leave["days"] = int(leave_type.leave_days)
-        employee_leave["days_used"] = (
-            0
-            if len(leaves_by_type) == 0
-            else [
-                out_leave_type[SECOND_ITEM_ONTHE_TUPLE_IS_DAYS_USED]
-                for out_leave_type in leaves_by_type
-                if out_leave_type[FIRST_ITEM_ONTHE_TUPLE_IS_LEAVE_TYPE_ID]
-                == leave_type.id
-            ][0].days
-        )
-        employee_leaves.append(employee_leave)
 
+        if len(leaves_by_type) == 0:
+            employee_leave["days_used"] = 0
+
+        else:
+            for employee_leave_type in leaves_by_type:
+                if employee_leave_type[LEAVE_TYPE_ID_INDEX] == leave_type.id:
+                    employee_leave["days_used"] = employee_leave_type[
+                        LEAVE_TYPE_DAYS_INDEX
+                    ].days
+                else:
+                    employee_leave["days_used"] = 0
+
+        employee_leaves.append(employee_leave)
     return employee_leaves

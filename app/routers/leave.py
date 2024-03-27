@@ -149,7 +149,7 @@ def update_leave(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
         )
-    leave_query.update(leave_details.dict(), synchronize_session=False)
+    leave_query.update(**leave_details.model_dump(), synchronize_session=False)
     db.commit()
     return {"message": "Successfully updated"}
 
@@ -186,7 +186,7 @@ def delete_leave(
 #     db.query(models.Leave).filter(models.Leave.employee_id == employee.id).values(
 #         ["end_date", "start_date"]
 #     )
-@router.post("/approve_leave/{leave_id}")
+@router.get("/approve_leave/{leave_id}")
 def approve_leave(
     leave_id: int,
     status_details: schemas.Status,
@@ -197,45 +197,40 @@ def approve_leave(
     leave_query = db.query(models.Leave).filter(models.Leave.id == leave_id)
 
     leave = leave_query.first()
-    if not leave:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Leave with id {leave_id} does not exist.",
-        )
+    if leave is None:
+        raise Error404(f"Leave with id {leave_id} does not exist.")
+
     employee = (
         db.query(models.Employee)
         .filter(models.Employee.id == leave.employee_id)
         .first()
     )
+    if employee is None:
+        raise Error404("Employee associated with the leave is not found")
 
     leave_type = (
         db.query(models.LeaveType)
         .filter(models.LeaveType.id == leave.leave_type_id)
         .first()
     )
-    print(leave.leave_type_id)
+    if leave_type is None:
+        raise Error404("There is no leave type associated with the leave")
+
     leave_days = leave.end_date.date() - leave.start_date.date()
     leave_days_left_query = db.query(models.LeaveDaysLeft).filter(
         models.LeaveDaysLeft.employee_id == employee.id,
         models.LeaveDaysLeft.leave_type_id == leave_type.id,
     )
-    print(f"Employee id: {employee.id}")
-    print(f"Leave type id: {leave_type.id}")
+
     leave_days_left = leave_days_left_query.first()
     if leave_days_left:
-        if leave_days > timedelta(days=(leave_days_left.days_left)):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Leave days requested are greater than the leave days left.",
+        if leave_days > timedelta(days=float(leave_days_left.days_left)):
+            raise Error400(
+                "Leave days requested are greater than the leave days left.",
             )
-    print(timedelta(days=leave_type.leave_days))
-    print(leave_type.leave_days)
-    print(leave_days)
-    if leave_days > timedelta(days=leave_type.leave_days):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Leave days requested are greater than the leave days left.",
-        )
+
+    if leave_days > timedelta(days=float(leave_type.leave_days)):
+        raise Error400("Leave days requested are greater than the leave days left.")
 
     if status_details.value == "approved":
         if leave_type.leave_type == "Annual leave":
@@ -244,25 +239,29 @@ def approve_leave(
                 .filter(models.Grade.id == employee.grade_id)
                 .first()
             )
+            if grade is None:
+                raise Error404("There are no grades associated with the employee")
+
             employee_grade_query = db.query(models.EmployeeGrade).filter(
                 models.EmployeeGrade.grade_id == employee.grade_id,
                 models.EmployeeGrade.employee_id == employee.id,
             )
+
             employee_grade = employee_grade_query.first()
             if not employee_grade:
-                if leave_days > timedelta(days=grade.leave_days):
+                if leave_days > timedelta(days=float(grade.leave_days)):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Leave days requested are greater than the leave days left",
                     )
             else:
-                if leave_days > timedelta(days=employee_grade.days_left):
+                if leave_days > timedelta(days=float(employee_grade.days_left)):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Leave days requested are greater than the leave days left",
                     )
             if employee_grade:
-                days_left = timedelta(days=employee_grade.days_left) - leave_days
+                days_left = timedelta(days=float(employee_grade.days_left)) - leave_days
                 employee_grade_query.update(
                     {"days_left": days_left.days}, synchronize_session=False
                 )
@@ -277,7 +276,7 @@ def approve_leave(
                 }
 
             else:
-                days_left = timedelta(days=grade.leave_days) - leave_days
+                days_left = timedelta(days=float(grade.leave_days)) - leave_days
                 new_employee_grade = models.EmployeeGrade(
                     grade_id=grade.id, employee_id=employee.id, days_left=days_left.days
                 )
@@ -295,18 +294,19 @@ def approve_leave(
                 }
 
         if leave_days_left:
-            days_left = timedelta(days=leave_days_left.days_left) - leave_days
+            days_left = timedelta(days=float(leave_days_left.days_left)) - leave_days
             leave_days_left_query.update(
                 {"days_left": days_left.days}, synchronize_session=False
             )
             db.commit()
         else:
-            days_left = timedelta(days=leave_type.leave_days) - leave_days
+            days_left = timedelta(days=float(leave_type.leave_days)) - leave_days
             new_leave_days_left = models.LeaveDaysLeft(
                 employee_id=employee.id,
                 leave_type_id=leave_type.id,
                 days_left=days_left.days,
             )
+
             db.add(new_leave_days_left)
             db.commit()
             db.refresh(new_leave_days_left)

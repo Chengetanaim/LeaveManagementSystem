@@ -22,7 +22,10 @@ def get_leave_days_left(
     leave_types = db.query(models.LeaveType).all()
     leaves_by_type = (
         db.query(models.Leave)
-        .filter_by(employee_id=employee.id)
+        .filter(
+            models.Leave.employee_id == employee.id,
+            models.Leave.status == schemas.Status.approved,
+        )
         .group_by(models.Leave.leave_type_id)
         .with_entities(
             models.Leave.leave_type_id,
@@ -33,10 +36,8 @@ def get_leave_days_left(
         .all()
     )
 
-    LEAVE_TYPE_ID_INDEX = 0
-    LEAVE_TYPE_DAYS_INDEX = 1
-
     employee_leaves: list[dict[str, str | int]] = []
+
     for leave_type in leave_types:
         employee_leave: dict[str, str | int] = {}
 
@@ -47,13 +48,15 @@ def get_leave_days_left(
             employee_leave["days_used"] = 0
 
         else:
-            for employee_leave_type in leaves_by_type:
-                if employee_leave_type[LEAVE_TYPE_ID_INDEX] == leave_type.id:
-                    employee_leave["days_used"] = employee_leave_type[
-                        LEAVE_TYPE_DAYS_INDEX
-                    ].days
-                else:
-                    employee_leave["days_used"] = 0
+            employee_record = tuple(
+                filter(lambda x: x[0] == leave_type.id, leaves_by_type)
+            )[0]
+
+            if len(employee_record) == 0:
+                employee_leave["days_used"] = 0
+            else:
+                (_, employee_leave_days_used) = employee_record
+                employee_leave["days_used"] = employee_leave_days_used.days
 
         employee_leaves.append(employee_leave)
     return employee_leaves

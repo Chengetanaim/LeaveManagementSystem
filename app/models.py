@@ -21,6 +21,9 @@ class Employee(Base):
     grade_id = Column(Integer, ForeignKey("grades.id", ondelete="CASCADE"))
     grade = relationship("Grade")
 
+    leaves = relationship("Leave", back_populates="employee")
+    clockings = relationship("Clocking", back_populates="employee")
+
 
 class User(Base):
     __tablename__ = "users"
@@ -90,7 +93,7 @@ class Leave(Base):
     employee_id = Column(
         Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
-    employee = relationship("Employee")
+    employee = relationship("Employee", back_populates="leaves")
     leave_type_id = Column(Integer, ForeignKey("leave-types.id", ondelete="CASCADE"))
     leave_type = relationship("LeaveType")
     status = Column(String)

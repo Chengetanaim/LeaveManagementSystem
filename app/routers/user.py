@@ -1,5 +1,7 @@
 from fastapi import HTTPException, status, Depends, APIRouter
 from sqlalchemy.orm import Session
+
+from app.errors import Error404, Error409
 from .. import models, utils, schemas, database
 from typing import List
 
@@ -18,20 +20,16 @@ def create_user(
         .filter(models.Department.id == employee_details.department_id)
         .first()
     )
-    if not department:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"There is no department of id: {employee_details.department_id}",
-        )
+    if department is None:
+        raise Error404("User's department does not exist")
+
     user = db.query(models.User).filter(models.User.email == user_details.email).first()
-    if user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Account with this email already exist.",
-        )
+    if user is not None:
+        raise Error409("User with the same email already exists")
+
     hashed_password = utils.hash(user_details.password)
     user_details.password = hashed_password
-    new_user = models.User(**user_details.dict(), role=user_role.value)
+    new_user = models.User(**user_details.model_dump(), role=user_role.value)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -39,13 +37,10 @@ def create_user(
     employee = (
         db.query(models.Employee).filter(models.Employee.user_id == new_user.id).first()
     )
-    if employee:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"You already have an employee profile",
-        )
+    if employee is not None:
+        raise Error409("Employee profile already exist")
 
-    new_employee = models.Employee(**employee_details.dict(), user_id=new_user.id)
+    new_employee = models.Employee(**employee_details.model_dump(), user_id=new_user.id)
     db.add(new_employee)
     db.commit()
     db.refresh(new_employee)

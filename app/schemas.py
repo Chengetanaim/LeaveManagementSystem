@@ -48,13 +48,6 @@ class EmployeeCreate(Employee):
     pass
 
 
-class EmployeeOut(Employee):
-    id: int
-    department: Department
-    user_id: int
-    user: UserOut
-
-
 class Grade(BaseModel):
     grade: str
     leave_days: int
@@ -84,7 +77,6 @@ class LeaveType(BaseModel):
 class LeaveOut(Leave):
     id: int
     employee_id: int
-    employee: EmployeeOut
     status: str
     leave_type: LeaveType
 
@@ -116,3 +108,12 @@ class SellLeave(BaseModel):
     employee_id: int
     number_of_days: int
     leave_type_id: int
+
+
+class EmployeeOut(Employee):
+    id: int
+    department: Department
+    user_id: int
+    user: UserOut
+    leaves: list[LeaveOut] | None
+    clockings: list[ClockingOut] | None

@@ -15,15 +15,18 @@ def get_leave_days_left(
     db: Session = Depends(database.get_db),
     current_user: schemas.UserOut = Depends(oauth2.get_current_user),
 ):
-    employee = db.query(models.Employee).filter_by(user_id=current_user.id).first()
-    if employee is None:
+    selected_employee = (
+        db.query(models.Employee).filter_by(user_id=current_user.id).first()
+    )
+
+    if selected_employee is None:
         raise Error404(f"Employee with user id {current_user.id} not found.")
 
-    leave_types = db.query(models.LeaveType).all()
-    leaves_by_type = (
+    all_leave_types = db.query(models.LeaveType).all()
+    grouped_leaves_by_type = (
         db.query(models.Leave)
         .filter(
-            models.Leave.employee_id == employee.id,
+            models.Leave.employee_id == selected_employee.id,
             models.Leave.status == schemas.Status.approved,
         )
         .group_by(models.Leave.leave_type_id)
@@ -38,24 +41,29 @@ def get_leave_days_left(
 
     employee_leaves: list[dict[str, str | int]] = []
 
-    for leave_type in leave_types:
+    for leave_type in all_leave_types:
         employee_leave: dict[str, str | int] = {}
 
         employee_leave["type"] = str(leave_type.leave_type)
         employee_leave["days"] = int(leave_type.leave_days)
 
-        if len(leaves_by_type) == 0:
+        if len(grouped_leaves_by_type) == 0:
             employee_leave["days_used"] = 0
 
         else:
             employee_record = tuple(
-                filter(lambda x: x[0] == leave_type.id, leaves_by_type)
-            )[0]
+                filter(
+                    lambda leave_turple: leave_turple[0] == leave_type.id,
+                    grouped_leaves_by_type,
+                )
+            )
+
+            selected_employee.date_created = 0
 
             if len(employee_record) == 0:
                 employee_leave["days_used"] = 0
             else:
-                (_, employee_leave_days_used) = employee_record
+                (_, employee_leave_days_used) = employee_record[0]
                 employee_leave["days_used"] = employee_leave_days_used.days
 
         employee_leaves.append(employee_leave)

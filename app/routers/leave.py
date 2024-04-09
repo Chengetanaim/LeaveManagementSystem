@@ -50,17 +50,6 @@ def create_leave(
             .first()
         )
 
-        # if employee_grade is None:
-        #     if leave_days > timedelta(days=int(grade.leave_days)):
-        #         raise Error400(
-        #             message="Leave days requested are greater than the leave days left"
-        #         )
-
-        # elif leave_days > timedelta(days=int(employee_grade.days_left)):
-        #     raise Error400(
-        #         message="Leave days requested are greater than the leave days left"
-        #     )
-
         new_leave = models.Leave(
             **leave_details.model_dump(), status="pending", employee_id=employee.id
         )
@@ -68,27 +57,6 @@ def create_leave(
         db.commit()
         db.refresh(new_leave)
         return new_leave
-
-    # leave_days_left = (
-    #     db.query(models.LeaveDaysLeft)
-    #     .filter(
-    #         models.LeaveDaysLeft.employee_id == employee.id,
-    #         models.LeaveDaysLeft.leave_type_id == leave_type.id,
-    #     )
-    #     .first()
-    # )
-    # if leave_days_left is None:
-    #     raise Error400(message="No leave days are left.")
-
-    # if leave_days > timedelta(days=int(leave_days_left.days_left)):
-    #     raise Error400(
-    #         message="Leave days requested are greater than the leave days left."
-    #     )
-
-    # if leave_days > timedelta(days=int(leave_type.leave_days)):
-    #     raise Error400(
-    #         message="Leave days requested are greater than the leave days left."
-    #     )
 
     new_leave = models.Leave(
         **leave_details.model_dump(), status="pending", employee_id=employee.id
@@ -171,21 +139,6 @@ def delete_leave(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# @router.get("/days-left")
-# def leaves_days_left(
-#     db: Session = Depends(database.get_db),
-#     current_user: models.User = Depends(oauth2.get_current_user),
-# ):
-#     employee = (
-#         db.query(models.Employee)
-#         .filter(models.Employee.user_id == current_user.id)
-#         .first()
-#     )
-
-
-#     db.query(models.Leave).filter(models.Leave.employee_id == employee.id).values(
-#         ["end_date", "start_date"]
-#     )
 @router.get("/approve_leave/{leave_id}")
 def approve_leave(
     leave_id: int,
@@ -193,8 +146,7 @@ def approve_leave(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-
-    leave_query = db.query(models.Leave).filter(models.Leave.id == leave_id)
+    leave_query = db.query(models.Leave).filter_by(id=leave_id)
 
     leave = leave_query.first()
     if leave is None:

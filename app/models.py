@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey  # type: ignore
 from .database import Base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship  # type: ignore
 
 
 class Employee(Base):

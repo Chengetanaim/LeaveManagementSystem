@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey  # type: ignore
 from .database import Base
 from sqlalchemy.orm import relationship  # type: ignore
+from sqlalchemy.sql.expression import text
 
 
 class Employee(Base):
@@ -14,6 +15,9 @@ class Employee(Base):
     department = relationship("Department")
     gender = Column(String, nullable=False)
     position = Column(String, nullable=False)
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
